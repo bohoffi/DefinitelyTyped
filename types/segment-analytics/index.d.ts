@@ -2,6 +2,7 @@
 // Project: https://segment.com/docs/libraries/analytics.js/
 // Definitions by: Andrew Fong <https://github.com/fongandrew>
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
+// TypeScript Version: 2.3
 
 declare interface JQuery {}
 
@@ -39,7 +40,7 @@ declare namespace SegmentAnalytics {
 
     /* The page method lets you record page views on your website, along with
        optional extra information about the page being viewed. */
-    page(category: string, name: string, properties?: Object,
+    page(category?: string, name?: string, properties?: Object,
          options?: SegmentOpts, callback?: () => void): void;
     page(name?: string, properties?: Object,
          options?: SegmentOpts, callback?: () => void): void;

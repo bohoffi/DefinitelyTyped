@@ -10,7 +10,11 @@ import {
     VictoryLine,
     VictoryChart,
     VictoryScatter,
-    VictoryPie
+    VictoryPie,
+    VictoryTheme,
+    VictoryLegend,
+    VictoryBoxPlot,
+    VictoryGroup
 } from "victory";
 
 // VictoryAnimation test
@@ -28,7 +32,7 @@ let test = <VictoryAnimation
     onEnd={() => {}}
 >
     {(style: AnimationStyle) =>
-        <span style={{color: style["color"]}}>Hello!</span>
+        <span style={{color: style["color"] as string}}>Hello!</span>
     }
 </VictoryAnimation>
 
@@ -156,7 +160,7 @@ test = (
           grid: {strokeWidth: 2},
           ticks: {stroke: "red"},
           tickLabels: {fontSize: 12},
-          axisLabel: {fontsize: 16}
+          axisLabel: {fontSize: 16}
         }}
         label="Planets"
         tickValues={[
@@ -185,7 +189,7 @@ test = (
         dependentAxis
         padding={{left: 50, top: 20, bottom: 20}}
         scale="log"
-        domain={[1, 5]}
+        domain={{ x: [new Date(Date.UTC(2016, 0, 1)), new Date()], y: [1,5] }}
     />
 );
 
@@ -241,8 +245,7 @@ test = (
         padding={75}
         style={{
             data: {
-              fill: (data: any) => data.y > 2 ?
-                "red" : "blue"
+              fill: "red",
             }
         }}
         data={[
@@ -252,6 +255,9 @@ test = (
             {x: 4, y: 2},
             {x: 5, y: 1}
         ]}
+        barWidth={20}
+        barRatio={100}
+        cornerRadius={2}
     />
 );
 
@@ -314,6 +320,86 @@ test = (
     />
 );
 
+// VictoryBoxPlot test
+test = (
+    <VictoryBoxPlot
+        animate={{
+            duration: 1000,
+            onEnter: {
+                duration: 500,
+                before: () => ({ y: 0, label: " " }),
+                after: datum => ({ y: datum.y, label: "NEW" })
+            }
+        }}
+        boxWidth={10}
+        domain={[0, 10]}
+        domainPadding={5}
+        data={[
+            { x: 1, y: [1, 2, 3, 5] },
+            { x: 2, y: [3, 2, 8, 10] },
+            { x: 3, y: [2, 8, 6, 5] },
+            { x: 4, y: [1, 3, 2, 9] }
+        ]}
+        events={[
+            {
+                target: "data",
+                eventKey: 2,
+                eventHandlers: {
+                    onClick: evt => {
+                        evt.stopPropagation();
+                        return [
+                            {
+                                mutation: () => {
+                                    return {
+                                        style: { fill: "orange", width: 20 }
+                                    };
+                                }
+                            },
+                            {
+                                target: "labels",
+                                eventKey: 3,
+                                mutation: () => {
+                                    return { text: "now click me" };
+                                }
+                            }
+                        ];
+                    }
+                }
+            },
+            {
+                target: "parent",
+                eventHandlers: {
+                    onClick: () => {
+                        return [
+                            {
+                                target: "data",
+                                mutation: () => {
+                                    return {
+                                        style: { fill: "tomato", width: 10 }
+                                    };
+                                }
+                            }
+                        ];
+                    }
+                }
+            }
+        ]}
+        height={500}
+        labelOrientation="top"
+        labels={true}
+        name="BoxPlot"
+        style={{
+            min: { stroke: "tomato" },
+            max: { stroke: "orange" },
+            q1: { fill: "tomato" },
+            q3: { fill: "orange" },
+            median: { stroke: "white", strokeWidth: 2 },
+            minLabels: { fill: "tomato" },
+            maxLabels: { fill: "orange" }
+        }}
+        whiskerWidth={5}
+    />
+);
 
 // VictoryChart test
 test = (
@@ -372,8 +458,7 @@ test = (
             style={{
               data: {
                 width: 15,
-                fill: (data: any) => data.y > 3 ?
-                  "gold" : "orange"
+                fill: "gold",
               }
             }}
             data={[
@@ -413,6 +498,23 @@ test = (
               {x: new Date(2015, 1, 1), y: 470}
             ]}/>
     </VictoryChart>
+);
+
+// VictoryGroup test
+test = (
+    <VictoryGroup
+        offset={40}
+    >
+        <VictoryBar
+            data={[{ x: "a", y: 2 }, { x: "b", y: 3 }, { x: "c", y: 5 }]}
+        />
+        <VictoryBar
+            data={[{ x: "a", y: 1 }, { x: "b", y: 4 }, { x: "c", y: 5 }]}
+        />
+        <VictoryBar
+            data={[{ x: "a", y: 3 }, { x: "b", y: 2 }, { x: "c", y: 6 }]}
+        />
+    </VictoryGroup>
 );
 
 // VictoryLine test
@@ -600,9 +702,38 @@ test = (
               ({y: datum.y, label: "NEW"})
            }
         }}
+        labelRadius={20}
     />
 );
 
 test = (
     <VictoryChart animate={{ duration: 2000, easing: 'bounce' }} />
+);
+
+// VictoryLegend test
+
+test = (
+    <VictoryLegend
+        data={[
+            {name: "A", symbol: { type: "circle"}},
+            {name: "B", symbol: { type: "square"}},
+            {name: "C", symbol: { type: "star"}}
+        ]}
+        gutter={10}
+        orientation="horizontal"
+        symbolSpacer={8}
+        width={100}
+        height={50}
+        x={5}
+        y={5}
+        theme={VictoryTheme.material}
+        style={{
+            data: { fill: "tomato", opacity: 0.7 },
+            labels: { fontSize: 12 },
+            parent: { border: "1px solid #ccc" }
+        }}
+        standalone
+        padding={{ top: 20, right: 40, bottom: 60, left: 20 }}
+        colorScale="heatmap"
+    />
 );

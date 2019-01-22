@@ -39,13 +39,21 @@ Mousetrap.unbind('?');
 Mousetrap.trigger('esc');
 Mousetrap.trigger('esc', 'keyup');
 
+// Test that custom keycodes can be added.
+Mousetrap.addKeycodes({ 144: 'numlock' });
+Mousetrap.bind('numlock', function() { console.log('numlock'); });
+
 Mousetrap.reset();
 
 // Test that we can create an instance of mousetrap and attach the
 // event handler to the form element only, instead of the entire document.
 var element = document.querySelector('form');
 var instance = new Mousetrap(element);
-instance.bind('mod+s', function(){ console.log('Instance Saved'); });
+instance.bind('mod+s', function () { console.log('Instance Saved'); });
+
+// Test that we can create an instance of mousetrap without passing element to the constructor.
+var documentInstance = new Mousetrap();
+documentInstance.bind('mod+s', function () { console.log('documentInstance Saved'); });
 
 // Test that the factory method works as well.
 Mousetrap(element).bind('mod+s', function(){ console.log('Factory Saved'); });

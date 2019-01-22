@@ -2,7 +2,7 @@
 // Project: https://github.com/jasmine/jasmine-ajax
 // Definitions by: Louis Grignon <https://github.com/lgrignon>
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
-// TypeScript Version: 2.1
+// TypeScript Version: 2.8
 
 interface JasmineAjaxResponse {
 	status?: number;
@@ -24,6 +24,8 @@ interface JasmineAjaxRequest extends XMLHttpRequest {
 	data(): string;
 
 	respondWith(response: JasmineAjaxResponse): void;
+	responseTimeout(): void;
+	responseError(): void;
 }
 
 interface JasmineAjaxRequestTracker {

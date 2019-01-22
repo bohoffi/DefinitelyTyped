@@ -1,9 +1,16 @@
-// Type definitions for node-usb 1.1
-// Project: https://github.com/nonolith/node-usb
+// Type definitions for node-usb 1.5
+// Project: https://github.com/tessel/node-usb
 // Definitions by: Eric Brody <https://github.com/underscorebrody>
+//                 Rob Moran <https://github.com/thegecko>
 // Definitions: https://github.com/borisyankov/DefinitelyTyped
 
 /// <reference types="node" />
+
+import { EventEmitter } from "events";
+
+export class LibUSBException extends Error {
+  errno: number;
+}
 
 export class Device {
   timeout: number;
@@ -12,6 +19,8 @@ export class Device {
   portNumbers: number[];
   deviceDescriptor: DeviceDescriptor;
   configDescriptor: ConfigDescriptor;
+  allConfigDescriptors: ConfigDescriptor[];
+  parent: Device;
   interfaces: Interface[];
 
   __open(): void;
@@ -20,8 +29,10 @@ export class Device {
   open(defaultConfig?: boolean): void;
   close(): void;
   interface(addr: number): Interface;
-  controlTransfer(bmRequestType: number, bRequest: number, wValue: number, wIndex: number, data_or_length: any, callback: (error?: string, buf?: Buffer) => void): Device;
+  controlTransfer(bmRequestType: number, bRequest: number, wValue: number, wIndex: number, data_or_length: any, callback: (error?: LibUSBException, buf?: Buffer) => void): Device;
   getStringDescriptor(desc_index: number, callback: (error?: string, buf?: Buffer) => void): void;
+  getBosDescriptor(callback: (error?: string, descriptor?: BosDescriptor) => void): void;
+  getCapabilities(callback: (error?: string, capabilities?: Capability[]) => void): void;
   setConfiguration(desired: number, cb: (err?: string) => void): void;
   reset(callback: (err?: string) => void): void;
 }
@@ -33,7 +44,7 @@ export class DeviceDescriptor {
   bDeviceClass: number;
   bDeviceSubClass: number;
   bDeviceProtocol: number;
-  bMaxPacketSize: number;
+  bMaxPacketSize0: number;
   idVendor: number;
   idProduct: number;
   bcdDevice: number;
@@ -53,14 +64,39 @@ export class ConfigDescriptor {
   bmAttributes: number;
   bMaxPower: number;
   extra: Buffer;
+  interfaces: InterfaceDescriptor[][];
+}
+
+export class BosDescriptor {
+  bLength: number;
+  bDescriptorType: number;
+  wTotalLength: number;
+  bNumDeviceCaps: number;
+  capabilities: CapabilityDescriptor[];
+}
+
+export class CapabilityDescriptor {
+  bLength: number;
+  bDescriptorType: number;
+  bDevCapabilityType: number;
+  dev_capability_data: Buffer;
+}
+
+export class Capability {
+  descriptor: CapabilityDescriptor;
+  type: number;
+  data: Buffer;
 }
 
 export class Interface {
+  interfaceNumber: number;
+  altSetting: number;
   descriptor: InterfaceDescriptor;
   endpoints: Endpoint[];
   constructor(device: Device, id: number);
   claim(): void;
-  release(closeEndpoints?: (err?: string) => void, cb?: (err?: string) => void): void;
+  release(cb?: (err?: string) => void): void;
+  release(closeEndpoints?: boolean, cb?: (err?: string) => void): void;
   isKernelDriverActive(): boolean;
   detachKernelDriver(): number;
   attachKernelDriver(): number;
@@ -79,34 +115,35 @@ export class InterfaceDescriptor {
   bInterfaceProtocol: number;
   iInterface: number;
   extra: Buffer;
+  endpoints: EndpointDescriptor[];
 }
 
-export interface Endpoint {
+export interface Endpoint extends EventEmitter {
   direction: string;
   transferType: number;
   timeout: number;
   descriptor: EndpointDescriptor;
 }
 
-export class InEndpoint implements Endpoint {
-  direction: string;
-  transferType: number;
-  timeout: number;
-  descriptor: EndpointDescriptor;
-  constructor(device: Device, descriptor: EndpointDescriptor);
-  transfer(length: number, callback: (error: string, data: Buffer) => void): InEndpoint;
-  startPoll(nTransfers: number, transferSize: number): void;
-  stopPoll(cb: () => void): void;
-}
-
-export class OutEndpoint implements Endpoint {
+export class InEndpoint extends EventEmitter implements Endpoint {
   direction: string;
   transferType: number;
   timeout: number;
   descriptor: EndpointDescriptor;
   constructor(device: Device, descriptor: EndpointDescriptor);
-  transfer(buffer: Buffer, cb: (err?: string) => void): OutEndpoint;
-  transferWithZLP(buf: Buffer, cb: (err?: string) => void): void;
+  transfer(length: number, callback: (error: LibUSBException, data: Buffer) => void): InEndpoint;
+  startPoll(nTransfers?: number, transferSize?: number): void;
+  stopPoll(cb?: () => void): void;
+}
+
+export class OutEndpoint extends EventEmitter implements Endpoint {
+  direction: string;
+  transferType: number;
+  timeout: number;
+  descriptor: EndpointDescriptor;
+  constructor(device: Device, descriptor: EndpointDescriptor);
+  transfer(buffer: Buffer, cb: (err?: LibUSBException) => void): OutEndpoint;
+  transferWithZLP(buf: Buffer, cb: (err?: LibUSBException) => void): void;
 }
 
 export class EndpointDescriptor {
@@ -118,10 +155,12 @@ export class EndpointDescriptor {
   bInterval: number;
   bRefresh: number;
   bSynchAddress: number;
+  extra: Buffer;
 }
 
 export function findByIds(vid: number, pid: number): Device;
 export function on(event: string, callback: (device: Device) => void): void;
+export function removeListener(event: string, callback: (device: Device) => void): void;
 export function getDeviceList(): Device[];
 export function setDebugLevel(level: number): void;
 
